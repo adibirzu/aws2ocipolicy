@@ -1,39 +1,43 @@
 import json
-import re
 
-# AWS IAM to OCI Verb mapping (granular and accurate)
 aws_to_oci_action_map = {
-    "describe": "inspect",
-    "get": "inspect",
-    "list": "inspect",
-    "read": "read",
-    "create": "use",
-    "delete": "manage",
-    "update": "use",
-    "put": "use",
-    "post": "use",
-    "attach": "use",
-    "detach": "manage",
-    "modify": "manage",
-    "start": "use",
-    "stop": "use",
-    "terminate": "manage",
+    "describe": "inspect", "get": "inspect", "list": "inspect",
+    "read": "read", "create": "use", "delete": "manage",
+    "update": "use", "put": "use", "post": "use",
+    "attach": "use", "detach": "manage", "modify": "manage",
+    "start": "use", "stop": "use", "terminate": "manage",
 }
 
-# Expanded AWS service → OCI resource mappings
 aws_service_to_oci_resources = {
-    "ec2": "instances",
-    "s3": "object-family",
-    "iam": "identity-resources",
-    "apigateway": "api-gateways",
-    "lambda": "functions",
-    "dynamodb": "nosql-tables",
-    "rds": "db-systems",
-    "cloudwatch": "metrics",
-    "cloudtrail": "audit-events",
-    "secretsmanager": "vault-secrets",
+    "ec2": "instances", "s3": "object-family",
+    "iam": "identity-resources", "apigateway": "api-gateways",
+    "lambda": "functions", "dynamodb": "nosql-tables",
+    "rds": "db-systems", "cloudwatch": "metrics",
+    "cloudtrail": "audit-events", "secretsmanager": "vault-secrets",
     "kms": "keys",
-    # Add more mappings based on your needs
+}
+
+oci_condition_variables = {
+    "aws:SourceIp": "request.networkSource.name",
+    "aws:username": "request.user.name",
+    "aws:userid": "request.user.id",
+    "aws:PrincipalOrgID": "request.user.compartment.id",
+    "aws:RequestedRegion": "request.region",
+    "aws:SecureTransport": "request.authScheme",
+}
+
+aws_condition_operator_mapping = {
+    "StringEquals": "==",
+    "StringNotEquals": "!=",
+    "StringLike": "=~",
+    "NumericEquals": "==",
+    "NumericLessThan": "<",
+    "NumericGreaterThan": ">",
+    "DateGreaterThan": ">",
+    "DateLessThan": "<",
+    "Bool": "==",
+    "IpAddress": "==",
+    "NotIpAddress": "!=",
 }
 
 def aws_action_to_oci(action):
@@ -44,13 +48,33 @@ def aws_action_to_oci(action):
             return verb, resource
     return "use", aws_service_to_oci_resources.get(service, "all-resources")
 
-def parse_conditions(conditions):
+def parse_aws_conditions_to_oci(conditions):
     oci_conditions = []
-    for condition_operator, condition_kv in conditions.items():
-        for condition_key, condition_value in condition_kv.items():
-            condition_str = f"{condition_key}='{condition_value}'"
-            oci_conditions.append(condition_str)
-    return " and ".join(oci_conditions)
+
+    for aws_operator, condition_content in conditions.items():
+        oci_operator = aws_condition_operator_mapping.get(aws_operator)
+        if not oci_operator:
+            continue  # Skip unsupported operators
+
+        for aws_key, value in condition_content.items():
+            oci_var = oci_condition_variables.get(aws_key, aws_key)
+
+            # Special handling for SecureTransport → request.authScheme
+            if aws_key == "aws:SecureTransport":
+                value = "tls" if value.lower() == "true" else "none"
+
+            # IP Address handling
+            if aws_operator in ["IpAddress", "NotIpAddress"]:
+                condition = f"{oci_var} {oci_operator} '{value}'"
+            elif aws_operator == "Bool":
+                value = "true" if str(value).lower() == "true" else "false"
+                condition = f"{oci_var} {oci_operator} {value}"
+            else:
+                condition = f"{oci_var} {oci_operator} '{value}'"
+
+            oci_conditions.append(condition)
+
+    return " and ".join(oci_conditions) if oci_conditions else None
 
 def translate_aws_to_oci(aws_policy_json, oci_group_name="ImportedAWSGroup"):
     aws_policy = json.loads(aws_policy_json)
@@ -59,7 +83,7 @@ def translate_aws_to_oci(aws_policy_json, oci_group_name="ImportedAWSGroup"):
     for stmt in aws_policy.get("Statement", []):
         actions = stmt["Action"]
         conditions = stmt.get("Condition", {})
-        oci_conditions = parse_conditions(conditions) if conditions else None
+        oci_conditions = parse_aws_conditions_to_oci(conditions)
 
         if isinstance(actions, str):
             actions = [actions]
