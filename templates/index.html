@@ -16,6 +16,34 @@
 
         <button onclick="downloadPolicy()">Download OCI Policy</button>
     </div>
+    <div class="help-section">
+  <button onclick="openDocs()">📖 AWS & OCI Condition Docs</button>
+</div>
+
+<div id="docsModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeDocs()">&times;</span>
+    <h2>AWS & OCI Conditions Reference</h2>
+    <div class="doc-container">
+      <div class="doc-column">
+        <h3>AWS IAM Conditions</h3>
+        <ul>
+          <li><a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html" target="_blank">AWS Condition Keys</a></li>
+          <li><a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html" target="_blank">AWS Condition Operators</a></li>
+          <li><a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws.html" target="_blank">AWS Policy Examples</a></li>
+        </ul>
+      </div>
+      <div class="doc-column">
+        <h3>OCI Policy Conditions</h3>
+        <ul>
+          <li><a href="https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/policyreference.htm#policy-conditions" target="_blank">OCI Policy Conditions</a></li>
+          <li><a href="https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/policyreference_topic-General_Variables_for_All_Requests.htm" target="_blank">OCI General Variables</a></li>
+          <li><a href="https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/policyreference_topic-Examples_of_Policies.htm" target="_blank">OCI Policy Examples</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 
     <script src="/static/script.js"></script>
 </body>
