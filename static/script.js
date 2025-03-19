@@ -10,14 +10,29 @@ function translatePolicy(){
     .then(response => response.json())
     .then(data => {
         document.getElementById('oci_policy_output').textContent = data.oci_policy;
+        visualizeConditions(data.oci_policy);
+        showValidationResults(data.validation_errors);
     });
 }
 
-function downloadPolicy(){
-    const text = document.getElementById('oci_policy_output').textContent;
-    const blob = new Blob([text], {type: 'text/plain'});
-    const anchor = document.createElement('a');
-    anchor.href = URL.createObjectURL(blob);
-    anchor.download = "oci_policy.txt";
-    anchor.click();
+function visualizeConditions(policy){
+    const conditionDiv = document.getElementById('condition_visualizer');
+    conditionDiv.innerHTML = '';
+    const conditions = policy.match(/where (.+)/g);
+    if (conditions) {
+        conditions.forEach(cond => {
+            const condElem = document.createElement('div');
+            condElem.textContent = `Condition: ${cond.replace('where ', '')}`;
+            condElem.classList.add('condition');
+            conditionDiv.appendChild(condElem);
+        });
+    }
+}
+
+function showValidationResults(errors){
+    if(errors.length > 0){
+        alert("Validation Errors:\n" + errors.join("\n"));
+    } else {
+        alert("Policy Validated Successfully!");
+    }
 }
