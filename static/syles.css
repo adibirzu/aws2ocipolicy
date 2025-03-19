@@ -29,3 +29,9 @@ pre {
     padding: 10px;
     overflow-x: auto;
 }
+.condition {
+    background-color: #d9edf7;
+    padding: 8px;
+    margin-top: 5px;
+    border-radius: 4px;
+}
