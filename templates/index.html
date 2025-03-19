@@ -10,7 +10,7 @@
         <textarea id="aws_policy" placeholder="Paste AWS IAM Policy JSON here"></textarea>
         <input type="text" id="oci_group" placeholder="OCI Group Name" value="ImportedAWSGroup">
         <button onclick="translatePolicy()">Translate to OCI</button>
-        
+        <div id="condition_visualizer"></div>
         <h3>Generated OCI Policy:</h3>
         <pre id="oci_policy_output"></pre>
 
