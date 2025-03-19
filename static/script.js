@@ -36,3 +36,18 @@ function showValidationResults(errors){
         alert("Policy Validated Successfully!");
     }
 }
+function openDocs(){
+  document.getElementById("docsModal").style.display = "block";
+}
+
+function closeDocs(){
+  document.getElementById("docsModal").style.display = "none";
+}
+
+// Close modal when clicking outside the content
+window.onclick = function(event) {
+  let modal = document.getElementById("docsModal");
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
