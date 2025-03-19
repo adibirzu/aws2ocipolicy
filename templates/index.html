@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AWS to OCI Policy Translator</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>AWS → OCI Policy Translator</h2>
+        <textarea id="aws_policy" placeholder="Paste AWS IAM Policy JSON here"></textarea>
+        <input type="text" id="oci_group" placeholder="OCI Group Name" value="ImportedAWSGroup">
+        <button onclick="translatePolicy()">Translate to OCI</button>
+        
+        <h3>Generated OCI Policy:</h3>
+        <pre id="oci_policy_output"></pre>
+
+        <button onclick="downloadPolicy()">Download OCI Policy</button>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
