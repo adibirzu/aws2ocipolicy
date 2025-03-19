@@ -35,3 +35,61 @@ pre {
     margin-top: 5px;
     border-radius: 4px;
 }
+.help-section {
+  text-align: right;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 20px;
+  width: 80%;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.close {
+  float: right;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.doc-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.doc-column {
+  width: 48%;
+  background-color: #eef2f7;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.doc-column ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.doc-column li {
+  margin-bottom: 10px;
+}
+
+.doc-column a {
+  text-decoration: none;
+  color: #0073bb;
+}
+
+.doc-column a:hover {
+  text-decoration: underline;
+}
