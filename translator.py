@@ -1,4 +1,6 @@
 import json
+import re
+from datetime import datetime
 
 aws_to_oci_action_map = {
     "describe": "inspect", "get": "inspect", "list": "inspect",
@@ -24,20 +26,15 @@ oci_condition_variables = {
     "aws:PrincipalOrgID": "request.user.compartment.id",
     "aws:RequestedRegion": "request.region",
     "aws:SecureTransport": "request.authScheme",
+    "aws:CurrentTime": "request.time",
 }
 
 aws_condition_operator_mapping = {
-    "StringEquals": "==",
-    "StringNotEquals": "!=",
-    "StringLike": "=~",
-    "NumericEquals": "==",
-    "NumericLessThan": "<",
-    "NumericGreaterThan": ">",
-    "DateGreaterThan": ">",
-    "DateLessThan": "<",
-    "Bool": "==",
-    "IpAddress": "==",
-    "NotIpAddress": "!=",
+    "StringEquals": "==", "StringNotEquals": "!=", "StringLike": "=~",
+    "NumericEquals": "==", "NumericLessThan": "<", "NumericGreaterThan": ">",
+    "DateGreaterThan": ">", "DateLessThan": "<",
+    "Bool": "==", "IpAddress": "==", "NotIpAddress": "!=",
+    "ArnLike": "=~", "ArnNotLike": "!~"
 }
 
 def aws_action_to_oci(action):
@@ -50,28 +47,26 @@ def aws_action_to_oci(action):
 
 def parse_aws_conditions_to_oci(conditions):
     oci_conditions = []
-
     for aws_operator, condition_content in conditions.items():
         oci_operator = aws_condition_operator_mapping.get(aws_operator)
         if not oci_operator:
-            continue  # Skip unsupported operators
+            continue
 
         for aws_key, value in condition_content.items():
             oci_var = oci_condition_variables.get(aws_key, aws_key)
 
-            # Special handling for SecureTransport → request.authScheme
-            if aws_key == "aws:SecureTransport":
-                value = "tls" if value.lower() == "true" else "none"
-
-            # IP Address handling
             if aws_operator in ["IpAddress", "NotIpAddress"]:
                 condition = f"{oci_var} {oci_operator} '{value}'"
-            elif aws_operator == "Bool":
+            elif aws_operator in ["Bool"]:
                 value = "true" if str(value).lower() == "true" else "false"
                 condition = f"{oci_var} {oci_operator} {value}"
+            elif aws_operator.startswith("Date"):
+                condition = f"{oci_var} {oci_operator} '{value}'"
+            elif aws_operator.startswith("Arn"):
+                condition = f"{oci_var} {oci_operator} '{value}'"
             else:
                 condition = f"{oci_var} {oci_operator} '{value}'"
-
+            
             oci_conditions.append(condition)
 
     return " and ".join(oci_conditions) if oci_conditions else None
@@ -94,5 +89,14 @@ def translate_aws_to_oci(aws_policy_json, oci_group_name="ImportedAWSGroup"):
             if oci_conditions:
                 oci_policy += f" where {oci_conditions}"
             oci_policy_statements.add(oci_policy)
+            
+def validate_oci_policy(policy):
+    oci_policy_regex = r"^Allow group [\w_-]+ to (inspect|read|use|manage) [\w-]+ in tenancy( where .+)?$"
+    policies = policy.split("\n")
+    errors = []
+    for line_num, stmt in enumerate(policies, start=1):
+        if not re.match(oci_policy_regex, stmt.strip()):
+            errors.append(f"Syntax Error in line {line_num}: '{stmt}'")
+    return errors
 
     return "\n".join(sorted(oci_policy_statements))
